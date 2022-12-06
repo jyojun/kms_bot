@@ -15,5 +15,14 @@
   "bugs": {
     "url": "https://github.com/jyojun/kms_bot/issues"
   },
-  "homepage": "https://github.com/jyojun/kms_bot#readme"
+  "homepage": "https://github.com/jyojun/kms_bot#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "discord.js": "^14.7.1",
+    "request": "^2.88.2"
+  },
+  "type": "commonjs",
+  "devDependencies": {
+    "dotenv": "^16.0.3"
+  }
 }
