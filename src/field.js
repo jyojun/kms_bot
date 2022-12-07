@@ -1,7 +1,7 @@
-const { parse } = require("node-html-parser");
 const axios = require("axios");
 const cheerio = require("cheerio");
-let data = [];
+const URL = "https://maple.inven.co.kr/db/field";
+
 const levelArea = [
   [1, 30, 1],
   [30, 40, 4],
@@ -31,31 +31,52 @@ const levelArea = [
   [270, 300, 99],
 ];
 
-export const getFieldData = async (level) => {
+const getFieldBody = async (URL, level) => {
   let filter = 0;
   for (i of levelArea) {
     if (level >= i[0] && level <= i[1]) filter = i[2];
   }
-  await axios
-    .get(`https://maple.inven.co.kr/db/field?levelfilter=${filter}`)
-    .then((res) => {
-      let $fieldData = [];
-      const $ = cheerio.load(res.data);
-      $(".card_area").map((idx, v) => {
-        let fieldInfo = [];
-        fieldInfo.push($(v).find("a").text());
-        fieldInfo.push($(v).find("p.recommendedLevel").text());
-        fieldInfo.push($(v).find("p.monsterName").text());
-        $fieldData[idx] = fieldInfo;
-      });
-
-      res.json($fieldData);
-    })
-    .then((result) => {
-      data = result;
-      console.log(data);
-    })
-    .catch((err) => {
-      console.log(err);
-    });
+  let res = await axios.get(`${URL}?levelfilter=${filter}`);
+  return res;
 };
+
+let input = [];
+
+require("readline")
+  .createInterface(process.stdin, process.stdout)
+  .on("line", (line) => {
+    input.push(line);
+  })
+  .on("close", () => {
+    let level = parseInt(input);
+    let data = [];
+    getFieldBody(URL, level)
+      .then((res) => {
+        let $fieldData = [];
+        const $ = cheerio.load(res.data);
+        $(".card_area").map((idx, v) => {
+          let fieldInfo = [];
+          fieldInfo.push($(v).find("a").text());
+          fieldInfo.push($(v).find("p.recommendedLevel").text());
+          fieldInfo[2] = [];
+          $(v)
+            .find("p.monsterName")
+            .map((index, vv) => fieldInfo[2].push($(vv).text()));
+          fieldInfo.push($(v).find("img").attr("src"));
+          $fieldData[idx] = fieldInfo;
+        });
+        return $fieldData;
+      })
+      .then((data) => {
+        for (i of data) {
+          console.log(`사냥터 이름 : ${i[0]}`);
+          console.log(`${i[1]}`);
+          console.log(`출현 몬스터 : ${i[2].join(", ")}`);
+          console.log(i[3]);
+          console.log();
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  });
